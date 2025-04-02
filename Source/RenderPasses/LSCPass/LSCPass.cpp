@@ -35,13 +35,19 @@ namespace
 {
 const std::string kShaderFile = "RenderPasses/LSCPass/LSCPass.cs.slang";
 
+const std::string kDepth = "depth";
+const std::string kNormW = "normW";
+const std::string kDirect = "direct";
+const std::string kIndirect = "indirect";
+const std::string kShadow = "shadow";
+
 const Falcor::ChannelList kInputChannels = {
     // clang-format off
-    { "depth",         "gDepth",      "Depth buffer (NDC)"                              },
-    { "normW",         "gNormW",      "Shading normal in world space"                   },
-    { "direct",        "gDirect",     "Direct lighting buffer"                          },
-    { "indirect",      "gIndirect",   "Indirect lighting buffer"                        },
-    { "shadow",        "gShadow",     "Light source visibility buffer (True in shadow)" },
+    { kDepth,         "gDepth",      "Depth buffer (NDC)"                              },
+    { kNormW,         "gNormW",      "Shading normal in world space"                   },
+    { kDirect,        "gDirect",     "Direct lighting buffer"                          },
+    { kIndirect,      "gIndirect",   "Indirect lighting buffer"                        },
+    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)" },
     // clang-format on
 };
 
