@@ -43,11 +43,11 @@ const std::string kShadow = "shadow";
 
 const Falcor::ChannelList kInputChannels = {
     // clang-format off
-    { kDepth,         "gDepth",      "Depth buffer (NDC)"                              },
-    { kNormW,         "gNormW",      "Shading normal in world space"                   },
-    { kDirect,        "gDirect",     "Direct lighting buffer"                          },
-    { kIndirect,      "gIndirect",   "Indirect lighting buffer"                        },
-    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)" },
+    { kDepth,         "gDepth",      "Depth buffer (NDC)",                              false /* required */, ResourceFormat::R32Float    },
+    { kNormW,         "gNormW",      "Shading normal in world space",                   false /* required */, ResourceFormat::RGB32Float  },
+    { kDirect,        "gDirect",     "Direct lighting buffer",                          false /* required */, ResourceFormat::RGBA32Float },
+    { kIndirect,      "gIndirect",   "Indirect lighting buffer",                        false /* required */, ResourceFormat::RGBA32Float },
+    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int       },
     // clang-format on
 };
 
@@ -83,7 +83,31 @@ RenderPassReflection LSCPass::reflect(const CompileData& compileData)
 void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
     // renderData holds the requested resources
-    // auto& pTexture = renderData.getTexture("src");
+    auto pDepth = renderData.getTexture(kDepth);
+    auto pNormW = renderData.getTexture(kNormW);
+    auto pDirect = renderData.getTexture(kDirect);
+    auto pIndirect = renderData.getTexture(kIndirect);
+    auto pShadow = renderData.getTexture(kShadow);
+
+    // Set shader parameters
+    auto var = mpVars->getRootVar();
+    var["gDepth"] = pDepth;
+    var["gNormW"] = pNormW;
+    var["gDirect"] = pDirect;
+    var["gIndirect"] = pIndirect;
+    var["gShadow"] = pShadow;
+
+    mFrameDim = uint2(pDirect->getWidth(), pDirect->getHeight());
+    var["PerFrameCB"]["resolution"] = mFrameDim;
+
+    // Run the LSC algorithm
+    DefineList defines;
+    mpProgram = Program::createCompute(mpDevice, kShaderFile, "lsc", defines, SlangCompilerFlags::TreatWarningsAsErrors);
+    auto pProgram = mpProgram;
+    FALCOR_ASSERT(pProgram);
+    uint3 numGroups = div_round_up(uint3(mFrameDim.x, mFrameDim.y, 1u), pProgram->getReflector()->getThreadGroupSize());
+    mpState->setProgram(pProgram);
+    pRenderContext->dispatch(mpState.get(), mpVars.get(), numGroups);
 }
 
 void LSCPass::renderUI(Gui::Widgets& widget) {}

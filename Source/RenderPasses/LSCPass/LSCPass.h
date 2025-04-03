@@ -52,5 +52,10 @@ public:
     virtual bool onMouseEvent(const MouseEvent& mouseEvent) override { return false; }
     virtual bool onKeyEvent(const KeyboardEvent& keyEvent) override { return false; }
 
-private:
+protected:
+    ref<Program> mpProgram;
+    ref<ProgramVars> mpVars;
+    ref<ComputeState> mpState;
+
+    uint2 mFrameDim = {0, 0};
 };
