@@ -98,7 +98,7 @@ void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderDat
     var["gShadow"] = pShadow;
 
     mFrameDim = uint2(pDirect->getWidth(), pDirect->getHeight());
-    var["PerFrameCB"]["resolution"] = mFrameDim;
+    var["PerFrameCB"]["gResolution"] = mFrameDim;
 
     // Run the LSC algorithm
     DefineList defines;
