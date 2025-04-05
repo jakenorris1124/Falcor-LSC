@@ -37,17 +37,19 @@ const std::string kShaderFile = "RenderPasses/LSCPass/LSCPass.cs.slang";
 
 const std::string kDepth = "depth";
 const std::string kNormW = "normW";
+const std::string kPosW = "posW";
 const std::string kDirect = "direct";
 const std::string kIndirect = "indirect";
 const std::string kShadow = "shadow";
 
 const Falcor::ChannelList kInputChannels = {
     // clang-format off
-    { kDepth,         "gDepth",      "Depth buffer (NDC)",                              false /* required */, ResourceFormat::R32Float    },
-    { kNormW,         "gNormW",      "Shading normal in world space",                   false /* required */, ResourceFormat::RGB32Float  },
-    { kDirect,        "gDirect",     "Direct lighting buffer",                          false /* required */, ResourceFormat::RGBA32Float },
-    { kIndirect,      "gIndirect",   "Indirect lighting buffer",                        false /* required */, ResourceFormat::RGBA32Float },
-    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int       },
+    { kDepth,         "gDepth",      "Depth buffer (NDC)",                              false /* required */, ResourceFormat::R32Float     },
+    { kNormW,         "gNormW",      "Shading normal in world space",                   false /* required */, ResourceFormat::RGBA32Float  },
+    { kPosW,          "gPosW",       "Shading position in world space",                 false /* required */, ResourceFormat::RGBA32Float  },
+    { kDirect,        "gDirect",     "Direct lighting buffer",                          false /* required */, ResourceFormat::RGBA32Float  },
+    { kIndirect,      "gIndirect",   "Indirect lighting buffer",                        false /* required */, ResourceFormat::RGBA32Float  },
+    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int        },
     // clang-format on
 };
 
@@ -85,6 +87,7 @@ void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderDat
     // renderData holds the requested resources
     auto pDepth = renderData.getTexture(kDepth);
     auto pNormW = renderData.getTexture(kNormW);
+    auto pPosW = renderData.getTexture(kPosW);
     auto pDirect = renderData.getTexture(kDirect);
     auto pIndirect = renderData.getTexture(kIndirect);
     auto pShadow = renderData.getTexture(kShadow);
@@ -93,6 +96,7 @@ void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderDat
     auto var = mpVars->getRootVar();
     var["gDepth"] = pDepth;
     var["gNormW"] = pNormW;
+    var["gPosW"] = pPosW;
     var["gDirect"] = pDirect;
     var["gIndirect"] = pIndirect;
     var["gShadow"] = pShadow;
