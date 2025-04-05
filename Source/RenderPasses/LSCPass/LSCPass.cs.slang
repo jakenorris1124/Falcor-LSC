@@ -8,7 +8,7 @@ RWTexture2D<float4> gNormW;
 RWTexture2D<float4> gPosW;
 RWTexture2D<float4> gDirect;
 RWTexture2D<float4> gIndirect;
-RWTexture2D<int> gShadow;
+//RWTexture2D<int> gShadow;
 
 RWTexture2D<float4> gColor;
 
@@ -37,7 +37,7 @@ void lsc(uint3 dispatchThreadId: SV_DispatchThreadID)
 
     float summed = 1;
     float4 indirect = gIndirect[pixelPos];
-    float shadow = gShadow[pixelPos];
+    //float shadow = gShadow[pixelPos];
 
     for (int x = min.x; x < max.x; x++)
     {
@@ -49,14 +49,14 @@ void lsc(uint3 dispatchThreadId: SV_DispatchThreadID)
 
             indirect += gIndirect[compare] * score;
             summed += score;
-            shadow += gShadow[pixelPos];
+            //shadow += gShadow[pixelPos];
         }
     }
 
     indirect /= summed;
-    shadow /= summed;
+    //shadow /= summed;
 
-    gColor[pixelPos] = gDirect[pixelPos] * indirect * shadow;
+    gColor[pixelPos] = gDirect[pixelPos] * indirect; //* shadow;
 }
 
 float similarityScore(int2 main, int2 compare)

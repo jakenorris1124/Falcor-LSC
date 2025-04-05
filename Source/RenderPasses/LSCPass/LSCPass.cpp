@@ -40,7 +40,7 @@ const std::string kNormW = "normW";
 const std::string kPosW = "posW";
 const std::string kDirect = "direct";
 const std::string kIndirect = "indirect";
-const std::string kShadow = "shadow";
+//const std::string kShadow = "shadow";
 
 const Falcor::ChannelList kInputChannels = {
     // clang-format off
@@ -49,7 +49,7 @@ const Falcor::ChannelList kInputChannels = {
     { kPosW,          "gPosW",       "Shading position in world space",                 false /* required */, ResourceFormat::RGBA32Float  },
     { kDirect,        "gDirect",     "Direct lighting buffer",                          false /* required */, ResourceFormat::RGBA32Float  },
     { kIndirect,      "gIndirect",   "Indirect lighting buffer",                        false /* required */, ResourceFormat::RGBA32Float  },
-    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int        },
+    //{ kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int        },
     // clang-format on
 };
 
@@ -90,7 +90,7 @@ void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderDat
     auto pPosW = renderData.getTexture(kPosW);
     auto pDirect = renderData.getTexture(kDirect);
     auto pIndirect = renderData.getTexture(kIndirect);
-    auto pShadow = renderData.getTexture(kShadow);
+    //auto pShadow = renderData.getTexture(kShadow);
 
     // Set shader parameters
     auto var = mpVars->getRootVar();
@@ -99,7 +99,7 @@ void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderDat
     var["gPosW"] = pPosW;
     var["gDirect"] = pDirect;
     var["gIndirect"] = pIndirect;
-    var["gShadow"] = pShadow;
+    //var["gShadow"] = pShadow;
 
     mFrameDim = uint2(pDirect->getWidth(), pDirect->getHeight());
     var["PerFrameCB"]["gResolution"] = mFrameDim;
