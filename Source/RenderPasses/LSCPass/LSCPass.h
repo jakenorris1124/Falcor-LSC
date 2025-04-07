@@ -58,4 +58,7 @@ protected:
     ref<ComputeState> mpState;
 
     uint2 mFrameDim = {0, 0};
+
+    ref<Program> createProgram();
+    void prepareBuffers(const RenderData& renderData, uint2 resolution);
 };

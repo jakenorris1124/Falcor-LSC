@@ -18,7 +18,7 @@ float maxTChange = 0.5;
 
 
 [numthreads(16, 16, 1)]
-void lsc(uint3 dispatchThreadId: SV_DispatchThreadID)
+void lowSampleCompensation(uint3 dispatchThreadId: SV_DispatchThreadID)
 {
     // TODO: CHECK PERFORMANCE
     if (any(dispatchThreadId.xy >= gResolution))
