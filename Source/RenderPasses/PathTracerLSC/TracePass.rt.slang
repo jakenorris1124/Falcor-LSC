@@ -53,7 +53,7 @@ struct DummyAttribs { uint dummy; };
 
 struct PathPayload
 {
-    uint4 packed[5];
+    uint4 packed[6];
 
     PackedHitInfo hit;
     GuideData guideData;
@@ -78,6 +78,8 @@ struct PathPayload
 
         p.packed[4].xyz = asuint(path.L);
         p.packed[4].w = asuint(path.pdf);
+
+        p.packed[5].xyz = asuint(path.D);
 
         p.hit = path.hit.pack();
         p.guideData = path.guideData;
@@ -106,6 +108,8 @@ struct PathPayload
 
         path.L = asfloat(p.packed[4].xyz);
         path.pdf = asfloat(p.packed[4].w);
+
+        path.D = asfloat(p.packed[5].xyz);
 
         path.hit = unpackHitInfo(p.hit);
         path.guideData = p.guideData;
