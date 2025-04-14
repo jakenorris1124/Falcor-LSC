@@ -40,7 +40,7 @@ const std::string kNormW = "normW";
 const std::string kPosW = "posW";
 const std::string kDirect = "direct";
 const std::string kIndirect = "indirect";
-const std::string kShadow = "shadow";
+//const std::string kShadow = "shadow";
 
 const Falcor::ChannelList kInputChannels = {
     // clang-format off
@@ -49,7 +49,7 @@ const Falcor::ChannelList kInputChannels = {
     { kPosW,          "gPosW",       "Shading position in world space",                 false /* required */, ResourceFormat::RGBA32Float  },
     { kDirect,        "gDirect",     "Direct lighting buffer",                          false /* required */, ResourceFormat::RGBA32Float  },
     { kIndirect,      "gIndirect",   "Indirect lighting buffer",                        false /* required */, ResourceFormat::RGBA32Float  },
-    { kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int        },
+    //{ kShadow,        "gShadow",     "Light source visibility buffer (True in shadow)", false /* required */, ResourceFormat::R8Int        },
     // clang-format on
 };
 
@@ -65,7 +65,9 @@ extern "C" FALCOR_API_EXPORT void registerPlugin(Falcor::PluginRegistry& registr
     registry.registerClass<RenderPass, LSCPass>();
 }
 
-LSCPass::LSCPass(ref<Device> pDevice, const Properties& props) : RenderPass(pDevice) {}
+LSCPass::LSCPass(ref<Device> pDevice, const Properties& props) : RenderPass(pDevice) {
+    mpState = ComputeState::create(mpDevice);
+}
 
 Properties LSCPass::getProperties() const
 {
@@ -76,42 +78,82 @@ RenderPassReflection LSCPass::reflect(const CompileData& compileData)
 {
     RenderPassReflection reflector;
 
-    addRenderPassOutputs(reflector, kOutputChannels);
-    addRenderPassInputs(reflector, kInputChannels);
+    addRenderPassOutputs(
+        reflector, kOutputChannels, ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource
+    );
+    addRenderPassInputs(reflector, kInputChannels, ResourceBindFlags::ShaderResource);
 
     return reflector;
 }
 
 void LSCPass::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
-    // renderData holds the requested resources
-    auto pDepth = renderData.getTexture(kDepth);
-    auto pNormW = renderData.getTexture(kNormW);
-    auto pPosW = renderData.getTexture(kPosW);
+    // Set up the program if it has not already been
+    if (mpProgram == nullptr)
+        mpProgram = createProgram();
+
+    // Get the resolution of the buffers
     auto pDirect = renderData.getTexture(kDirect);
-    auto pIndirect = renderData.getTexture(kIndirect);
-    auto pShadow = renderData.getTexture(kShadow);
+    mFrameDim = uint2(pDirect->getWidth(), pDirect->getHeight());
 
     // Set shader parameters
-    auto var = mpVars->getRootVar();
-    var["gDepth"] = pDepth;
-    var["gNormW"] = pNormW;
-    var["gPosW"] = pPosW;
-    var["gDirect"] = pDirect;
-    var["gIndirect"] = pIndirect;
-    var["gShadow"] = pShadow;
-
-    mFrameDim = uint2(pDirect->getWidth(), pDirect->getHeight());
-    var["PerFrameCB"]["gResolution"] = mFrameDim;
+    mpVars = ProgramVars::create(mpDevice, mpProgram->getReflector());
+    prepareBuffers(renderData, mFrameDim);
 
     // Run the LSC algorithm
-    DefineList defines;
-    mpProgram = Program::createCompute(mpDevice, kShaderFile, "lsc", defines, SlangCompilerFlags::TreatWarningsAsErrors);
-    auto pProgram = mpProgram;
-    FALCOR_ASSERT(pProgram);
-    uint3 numGroups = div_round_up(uint3(mFrameDim.x, mFrameDim.y, 1u), pProgram->getReflector()->getThreadGroupSize());
-    mpState->setProgram(pProgram);
+    uint3 numGroups = div_round_up(uint3(mFrameDim.x, mFrameDim.y, 1u), mpProgram->getReflector()->getThreadGroupSize());
+    mpState->setProgram(mpProgram);
+    FALCOR_ASSERT(mpVars);
     pRenderContext->dispatch(mpState.get(), mpVars.get(), numGroups);
+}
+
+ref<Program> LSCPass::createProgram()
+{
+    DefineList defines;
+    defines.add("_INPUT_FORMAT", "INPUT_FORMAT_FLOAT");
+    auto pProgram = Program::createCompute(mpDevice, kShaderFile, "lowSampleCompensation", defines, SlangCompilerFlags::TreatWarningsAsErrors);
+    FALCOR_ASSERT(pProgram);
+
+    return pProgram;
+}
+
+void LSCPass::prepareBuffers(const RenderData& renderData, uint2 resolution)
+{
+    auto var = mpVars->getRootVar();
+
+    auto prepareBuffer = [&](ChannelDesc channel)
+    {
+        auto pBuf = renderData.getTexture(channel.name);
+        if (!pBuf || pBuf->getWidth() != resolution.x || pBuf->getHeight() != resolution.y)
+        {
+            pBuf = mpDevice->createTexture2D(
+                resolution.x,
+                resolution.y,
+                channel.format,
+                1,
+                1,
+                nullptr,
+                ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess
+            );
+            FALCOR_ASSERT(pBuf);
+        }
+
+        var[channel.texname] = pBuf;
+    };
+
+    // Prepare input buffers
+    for (auto it = begin(kInputChannels); it < end(kInputChannels); it++)
+    {
+        prepareBuffer(*it);
+    }
+
+    // Prepare output buffers
+    for (auto it = begin(kOutputChannels); it < end(kOutputChannels); it++)
+    {
+        prepareBuffer(*it);
+    }
+
+    var["PerFrameCB"]["gResolution"] = resolution;
 }
 
 void LSCPass::renderUI(Gui::Widgets& widget) {}

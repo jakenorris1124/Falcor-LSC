@@ -838,6 +838,7 @@ struct PathTracerLSC
         // - Sample scatter ray or terminate
 
         const bool isPrimaryHit = path.getVertexIndex() == 1;
+        const bool isDirect = path.getVertexIndex() < 2;
         const HitType hitType = path.hit.getType();
         const bool isTriangleHit = hitType == HitType::Triangle;
         const bool isCurveHit = kUseCurves && (hitType == HitType::Curve);
@@ -925,10 +926,10 @@ struct PathTracerLSC
             }
 
             // Accumulate emitted radiance weighted by path throughput and MIS weight.
-            if (isPrimaryHit)
+            if (isDirect)
                 addToDirectContribution(path, misWeight * bsdfProperties.emission);
             else
-                addToPathContribution(path, misWeight * bsdfProperties.emission);
+            addToPathContribution(path, misWeight * bsdfProperties.emission);
 
             attenuatedEmission = path.thp * misWeight * bsdfProperties.emission;
         }
@@ -1025,7 +1026,7 @@ struct PathTracerLSC
                     bool visible = vq.traceVisibilityRay(ray);
                     if (visible)
                     {
-                        if (isPrimaryHit) addToDirectContribution(path, Lr);
+                        if (isDirect) addToDirectContribution(path, Lr);
                         else addToPathContribution(path, Lr);
                     }
                 }
@@ -1126,7 +1127,7 @@ struct PathTracerLSC
 
             float3 Le = envMapSampler.eval(path.dir);
             emitterRadiance = misWeight * Le;
-            if (path.getVertexIndex() == 1) addToDirectContribution(path, emitterRadiance);
+            if (path.getVertexIndex()  < 2) addToDirectContribution(path, emitterRadiance);
             else addToPathContribution(path, emitterRadiance);
 
             if (kOutputGuideData && path.getVertexIndex() == 2
