@@ -1391,7 +1391,8 @@ void PathTracerLSC::resolvePass(RenderContext* pRenderContext, const RenderData&
     if (mVarsChanged)
     {
         var["sampleOffset"] = mpSampleOffset; // Can be nullptr
-        var["sampleColor"] = mpSampleColor;
+        var["sampleColorI"] = mpSampleColorI;
+        var["sampleColorD"] = mpSampleColorD;
         var["sampleGuideData"] = mpSampleGuideData;
         var["sampleNRDRadiance"] = mpSampleNRDRadiance;
         var["sampleNRDHitDist"] = mpSampleNRDHitDist;

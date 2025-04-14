@@ -42,7 +42,8 @@ struct ResolvePass
     // Resources
     PathTracerLSCParams params;                                ///< Runtime parameters.
 
-    StructuredBuffer<ColorType>   sampleColor;              ///< Input per-sample color if kSamplesPerPixel != 1.
+    StructuredBuffer<ColorType> sampleColorI;               ///< Input per-sample color (indirect) if kSamplesPerPixel != 1.
+    StructuredBuffer<ColorType> sampleColorD;               ///< Input per-sample color (direct) if kSamplesPerPixel != 1.
     StructuredBuffer<GuideData>   sampleGuideData;          ///< Input per-sample guide data. Only valid if kOutputGuideData == true.
     StructuredBuffer<NRDRadiance> sampleNRDRadiance;        ///< Input per-sample NRD radiance data. Only valid if kOutputNRDData == true.
     StructuredBuffer<float>       sampleNRDHitDist;         ///< Input per-sample NRD hit distance data. Only valid if kOutputNRDData == true.
@@ -55,7 +56,8 @@ struct ResolvePass
     Texture2D<uint> sampleCount;                            ///< Optional input sample count buffer. Only valid when kSamplesPerPixel == 0.
     Texture2D<uint> sampleOffset;                           ///< Output offset into per-sample buffers. Only valid when kSamplesPerPixel == 0.
 
-    RWTexture2D<float4> outputColor;                        ///< Output resolved color.
+    RWTexture2D<float4> outputIndirect;                     ///< Output resolved color. (indirect)
+    RWTexture2D<float4> outputDirect;                       ///< Output resolved color (direct)
     RWTexture2D<float4> outputAlbedo;                       ///< Output resolved albedo. Only valid if kOutputGuideData == true.
     RWTexture2D<float4> outputSpecularAlbedo;               ///< Output resolved specular albedo. Only valid if kOutputGuideData == true.
     RWTexture2D<float4> outputIndirectAlbedo;               ///< Output resolved indirect albedo. Only valid if kOutputGuideData == true.
@@ -91,15 +93,18 @@ struct ResolvePass
         // In all other cases, we need to resolve the individual samples.
         if (kSamplesPerPixel != 1)
         {
-            float3 color = float3(0.f);
+            float3 colorI = float3(0.f);
+            float3 colorD = float3(0.f);
 
             for (uint sampleIdx = 0; sampleIdx < spp; sampleIdx++)
             {
                 uint idx = offset + sampleIdx;
-                color += sampleColor[idx].get();
+                colorI += sampleColorI[idx].get();
+                colorD += sampleColorD[idx].get();
             }
 
-            outputColor[pixel] = float4(invSpp * color, 1.f);
+            outputIndirect[pixel] = float4(invSpp * colorI, 1.f);
+            outputDirect[pixel] = float4(invSpp * colorD, 1.f);
         }
 
         // Guide data is always written per-sample and needs to be resolved.
