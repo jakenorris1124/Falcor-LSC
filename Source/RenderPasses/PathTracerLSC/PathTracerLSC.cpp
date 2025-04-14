@@ -885,9 +885,15 @@ void PathTracerLSC::prepareResources(RenderContext* pRenderContext, const Render
     // For the special case of fixed 1 spp, the output is written out directly and this buffer is not needed.
     if (!mFixedSampleCount || mStaticParams.samplesPerPixel > 1)
     {
-        if (!mpSampleColor || mpSampleColor->getElementCount() < sampleCount || mVarsChanged)
+        if (!mpSampleColorI || mpSampleColorI->getElementCount() < sampleCount || mVarsChanged)
         {
-            mpSampleColor = mpDevice->createStructuredBuffer(var["sampleColor"], sampleCount, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, MemoryType::DeviceLocal, nullptr, false);
+            mpSampleColorI = mpDevice->createStructuredBuffer(var["sampleColorI"], sampleCount, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, MemoryType::DeviceLocal, nullptr, false);
+            mVarsChanged = true;
+        }
+
+        if (!mpSampleColorD || mpSampleColorD->getElementCount() < sampleCount || mVarsChanged)
+        {
+            mpSampleColorD = mpDevice->createStructuredBuffer(var["sampleColorD"], sampleCount, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, MemoryType::DeviceLocal, nullptr, false);
             mVarsChanged = true;
         }
     }
