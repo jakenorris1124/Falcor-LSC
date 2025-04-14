@@ -79,7 +79,8 @@ struct PathTracerLSC
     Texture2D<uint> sampleOffset;                   ///< Output offset into per-sample buffers. Only valid when kSamplesPerPixel == 0.
 
     // Outputs
-    RWStructuredBuffer<ColorType> sampleColor;      ///< Output per-sample color if kSamplesPerPixel != 1.
+    StructuredBuffer<ColorType> sampleColorI;       ///< Input per-sample color (indirect) if kSamplesPerPixel != 1.
+    StructuredBuffer<ColorType> sampleColorD;       ///< Input per-sample color (direct) if kSamplesPerPixel != 1.
     RWStructuredBuffer<GuideData> sampleGuideData;  ///< Output per-sample guide data.
     NRDBuffers outputNRD;                           ///< Output NRD data.
 
@@ -1196,7 +1197,8 @@ struct PathTracerLSC
         else
         {
             // Write color to per-sample buffer.
-            sampleColor[outIdx].set(path.L);
+            sampleColorI[outIdx].set(path.L);
+            sampleColorD[outIdx].set(path.D);
         }
 
         if (kOutputGuideData)

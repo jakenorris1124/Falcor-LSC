@@ -1104,7 +1104,8 @@ void PathTracerLSC::bindShaderData(const ShaderVar& var, const RenderData& rende
         if (useLightSampling && mpEnvMapSampler) mpEnvMapSampler->bindShaderData(var["envMapSampler"]);
 
         var["sampleOffset"] = mpSampleOffset; // Can be nullptr
-        var["sampleColor"] = mpSampleColor;
+        var["sampleColorI"] = mpSampleColorI;
+        var["sampleColorD"] = mpSampleColorD;
         var["sampleGuideData"] = mpSampleGuideData;
     }
 
