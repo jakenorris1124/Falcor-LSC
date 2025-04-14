@@ -885,9 +885,15 @@ void PathTracerLSC::prepareResources(RenderContext* pRenderContext, const Render
     // For the special case of fixed 1 spp, the output is written out directly and this buffer is not needed.
     if (!mFixedSampleCount || mStaticParams.samplesPerPixel > 1)
     {
-        if (!mpSampleColor || mpSampleColor->getElementCount() < sampleCount || mVarsChanged)
+        if (!mpSampleColorI || mpSampleColorI->getElementCount() < sampleCount || mVarsChanged)
         {
-            mpSampleColor = mpDevice->createStructuredBuffer(var["sampleColor"], sampleCount, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, MemoryType::DeviceLocal, nullptr, false);
+            mpSampleColorI = mpDevice->createStructuredBuffer(var["sampleColorI"], sampleCount, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, MemoryType::DeviceLocal, nullptr, false);
+            mVarsChanged = true;
+        }
+
+        if (!mpSampleColorD || mpSampleColorD->getElementCount() < sampleCount || mVarsChanged)
+        {
+            mpSampleColorD = mpDevice->createStructuredBuffer(var["sampleColorD"], sampleCount, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, MemoryType::DeviceLocal, nullptr, false);
             mVarsChanged = true;
         }
     }
@@ -1098,7 +1104,8 @@ void PathTracerLSC::bindShaderData(const ShaderVar& var, const RenderData& rende
         if (useLightSampling && mpEnvMapSampler) mpEnvMapSampler->bindShaderData(var["envMapSampler"]);
 
         var["sampleOffset"] = mpSampleOffset; // Can be nullptr
-        var["sampleColor"] = mpSampleColor;
+        var["sampleColorI"] = mpSampleColorI;
+        var["sampleColorD"] = mpSampleColorD;
         var["sampleGuideData"] = mpSampleGuideData;
     }
 
@@ -1370,7 +1377,8 @@ void PathTracerLSC::resolvePass(RenderContext* pRenderContext, const RenderData&
     auto var = mpResolvePass->getRootVar()["CB"]["gResolvePass"];
     var["params"].setBlob(mParams);
     var["sampleCount"] = renderData.getTexture(kInputSampleCount); // Can be nullptr
-    var["outputColor"] = renderData.getTexture(kOutputColor);
+    var["outputIndirect"] = renderData.getTexture(kOutputIndirect);
+    var["outputDirect"] = renderData.getTexture(kOutputDirect);
     var["outputAlbedo"] = renderData.getTexture(kOutputAlbedo);
     var["outputSpecularAlbedo"] = renderData.getTexture(kOutputSpecularAlbedo);
     var["outputIndirectAlbedo"] = renderData.getTexture(kOutputIndirectAlbedo);
@@ -1385,7 +1393,8 @@ void PathTracerLSC::resolvePass(RenderContext* pRenderContext, const RenderData&
     if (mVarsChanged)
     {
         var["sampleOffset"] = mpSampleOffset; // Can be nullptr
-        var["sampleColor"] = mpSampleColor;
+        var["sampleColorI"] = mpSampleColorI;
+        var["sampleColorD"] = mpSampleColorD;
         var["sampleGuideData"] = mpSampleGuideData;
         var["sampleNRDRadiance"] = mpSampleNRDRadiance;
         var["sampleNRDHitDist"] = mpSampleNRDHitDist;

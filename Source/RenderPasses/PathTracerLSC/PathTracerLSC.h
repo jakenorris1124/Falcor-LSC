@@ -197,7 +197,8 @@ private:
     std::unique_ptr<TracePass>      mpTraceDeltaTransmissionPass;   ///< Delta transmission trace pass (for NRD).
 
     ref<Texture>                    mpSampleOffset;             ///< Output offset into per-sample buffers to where the samples for each pixel are stored (the offset is relative the start of the tile). Only used with non-fixed sample count.
-    ref<Buffer>                     mpSampleColor;              ///< Compact per-sample color buffer. This is used only if spp > 1.
+    ref<Buffer>                     mpSampleColorI;              ///< Compact per-sample color (indirect) buffer. This is used only if spp > 1.
+    ref<Buffer>                     mpSampleColorD;             ///< Compact per-sample color (direct) buffer. This is used only if spp > 1.
     ref<Buffer>                     mpSampleGuideData;          ///< Compact per-sample denoiser guide data.
     ref<Buffer>                     mpSampleNRDRadiance;        ///< Compact per-sample NRD radiance data.
     ref<Buffer>                     mpSampleNRDHitDist;         ///< Compact per-sample NRD hit distance data.
