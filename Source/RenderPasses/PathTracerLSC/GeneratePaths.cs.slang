@@ -72,7 +72,8 @@ struct PathGenerator
     Texture2D<uint> sampleCount;                    ///< Optional input sample count buffer. Only valid when kSamplesPerPixel == 0.
     RWTexture2D<uint> sampleOffset;                 ///< Output offset into per-sample buffers. Only valid when kSamplesPerPixel == 0.
 
-    RWStructuredBuffer<ColorType> sampleColor;      ///< Output per-sample color if kSamplesPerPixel != 1.
+    StructuredBuffer<ColorType> sampleColorI;       ///< Input per-sample color (indirect) if kSamplesPerPixel != 1.
+    StructuredBuffer<ColorType> sampleColorD;       ///< Input per-sample color (direct) if kSamplesPerPixel != 1.
     RWStructuredBuffer<GuideData> sampleGuideData;  ///< Output per-sample guide data.
     NRDBuffers outputNRD;                           ///< Output NRD data.
 
@@ -226,7 +227,8 @@ struct PathGenerator
         {
             if (kSamplesPerPixel != 1)
             {
-                sampleColor[outIdx + i].set(color);
+                sampleColorI[outIdx + i].set(color);
+                sampleColorD[outIdx + i].set(color);
             }
 
             if (kOutputGuideData)
