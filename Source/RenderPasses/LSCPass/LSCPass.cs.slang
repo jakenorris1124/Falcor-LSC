@@ -36,8 +36,13 @@ void lowSampleCompensation(uint3 dispatchThreadId: SV_DispatchThreadID)
     );
 
     float summed = 1.0;
-    float4 indirect = float4(0);
+    float4 otherIndirects = float4(0);
     //float shadow = gShadow[pixelPos];
+
+    float depth = gDepth[pixelPos];
+    float4 normal = gNormW[pixelPos];
+    float4 position = gPosW[pixelPos];
+    float4 indirect = gIndirect[pixelPos];
     
     for (int x = min.x; x < max.x; x++)
     {
@@ -46,26 +51,26 @@ void lowSampleCompensation(uint3 dispatchThreadId: SV_DispatchThreadID)
             uint2 compare = uint2(x, y);
             if (compare.x != pixelPos.x && compare.y != pixelPos.y)
             {
-                float score = similarityScore(pixelPos, compare);
+                float score = similarityScore(pixelPos, compare, depth, normal, position);
 
-                indirect += lerp(getIndirect(pixelPos), getIndirect(compare), score);
+                otherIndirects += lerp(indirect, getIndirect(compare), score);
                 summed += 1;
                 // shadow += gShadow[pixelPos];
             }
         }
     }
 
-    indirect /= summed;
+    otherIndirects /= summed;
     //shadow /= summed;
 
-    gColor[pixelPos] =  gDirect[pixelPos] + lerp(getIndirect(pixelPos), indirect, 0.6); //* shadow;*/
+    gColor[pixelPos] = gDirect[pixelPos] + lerp(getIndirect(pixelPos), otherIndirects, 0.6); //* shadow;*/
 }
 
-float similarityScore(uint2 main, uint2 compare)
+float similarityScore(uint2 main, uint2 compare, float depth, float4 normal, float4 position)
 {
-    float angleSimilarity = (dot(gNormW[main], gNormW[compare]) + 1.0) / 2.0;
-    int depthSimilarity = abs(gDepth[main] - gDepth[compare]) > maxTChange ? 0 : 1;
-    float distanceSimilarity = 1.0 / distance(gPosW[main], gPosW[compare]);
+    float angleSimilarity = (dot(normal, gNormW[compare]) + 1.0) / 2.0;
+    int depthSimilarity = abs(depth - gDepth[compare]) > maxTChange ? 0 : 1;
+    float distanceSimilarity = 1.0 / distance(position, gPosW[compare]);
     distanceSimilarity = clamp(distanceSimilarity, 0.0, 1.0);
 
     return angleSimilarity * depthSimilarity * distanceSimilarity;
