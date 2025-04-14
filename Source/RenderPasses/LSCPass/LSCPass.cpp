@@ -81,7 +81,7 @@ RenderPassReflection LSCPass::reflect(const CompileData& compileData)
     addRenderPassOutputs(
         reflector, kOutputChannels, ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource
     );
-    addRenderPassInputs(reflector, kInputChannels);
+    addRenderPassInputs(reflector, kInputChannels, ResourceBindFlags::ShaderResource);
 
     return reflector;
 }
