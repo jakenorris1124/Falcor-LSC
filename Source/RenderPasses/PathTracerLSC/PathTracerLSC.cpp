@@ -1377,7 +1377,8 @@ void PathTracerLSC::resolvePass(RenderContext* pRenderContext, const RenderData&
     auto var = mpResolvePass->getRootVar()["CB"]["gResolvePass"];
     var["params"].setBlob(mParams);
     var["sampleCount"] = renderData.getTexture(kInputSampleCount); // Can be nullptr
-    var["outputColor"] = renderData.getTexture(kOutputColor);
+    var["outputIndirect"] = renderData.getTexture(kOutputIndirect);
+    var["outputDirect"] = renderData.getTexture(kOutputDirect);
     var["outputAlbedo"] = renderData.getTexture(kOutputAlbedo);
     var["outputSpecularAlbedo"] = renderData.getTexture(kOutputSpecularAlbedo);
     var["outputIndirectAlbedo"] = renderData.getTexture(kOutputIndirectAlbedo);
