@@ -49,11 +49,12 @@ void lowSampleCompensation(uint3 dispatchThreadId: SV_DispatchThreadID)
         for (int y = min.y; y < max.y; y++)
         {
             uint2 compare = uint2(x, y);
-            if (compare.x != pixelPos.x && compare.y != pixelPos.y)
+            if (!(compare.x == pixelPos.x && compare.y == pixelPos.y))
             {
+                float4 compareIndirect = gIndirect[compare];
                 float score = similarityScore(pixelPos, compare, depth, normal, position);
 
-                otherIndirects += lerp(indirect, getIndirect(compare), score);
+                otherIndirects += lerp(indirect, compareIndirect, 0.6) * score;
                 summed += 1;
                 // shadow += gShadow[pixelPos];
             }
@@ -74,6 +75,13 @@ float similarityScore(uint2 main, uint2 compare, float depth, float4 normal, flo
     distanceSimilarity = clamp(distanceSimilarity, 0.0, 1.0);
 
     return angleSimilarity * depthSimilarity * distanceSimilarity;
+}
+
+float colorSimilarityScore(float4 main, float4 compare)
+{
+    float4 diff = abs(main - compare);
+    float score = 1.0 - (diff.x + diff.y + diff.z) / 3.0;
+    return score;
 }
 
 float4 getIndirect(uint2 pos)
